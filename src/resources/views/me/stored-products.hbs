@@ -1,0 +1,188 @@
+
+<style>
+    .listImgs_img{
+        border-radius: 5px;
+        margin: 0 3px;
+        max-width: 30px;
+        max-height: 30px;
+        object-fit: cover;
+    }
+</style>
+
+
+<form name="container-form" method="POST" action="/products/handle-stored-form-actions">
+
+   <div class="d-flex align-items-center justify-content-center">
+     <h3>Sản phẩm của tôi</h3> <span>({{ productsCount }})</span>
+      <a href="/me/trash/products" class="ml-auto">Thùng rác ({{deletedCount}})</a>
+   </div>
+
+  <div class="d-flex align-items-center justify-content-center">
+      <div class="form-check">
+          <input class="form-check-input" type="checkbox" value="" id="checkbox-all">
+          <label class="form-check-label" for="checkbox-all">
+            Chọn tất cả
+          </label>
+      </div>
+
+      <select name="action" class="form-control form-control-sm  text-center" style="margin: 0 10px; width: 160px;" required>
+        <option value="">-- Chọn hành động --</option>
+        <option value="delete">Xóa</option>
+      </select>
+
+      <button class="btn btn-primary apply-submit-btn btn-sm" disabled="disabled">Áp dụng</button>
+  </div>
+    <table class="table table-striped mt-4 text-center">
+        <thead>
+            <tr>
+                <th></th>
+                <th scope="col">
+                  STT
+                </th>
+                <th scope="col">
+                  Tên sản phẩm
+                  {{{sortable 'name' _sort}}}
+                </th>
+                <th scope="col">
+                  Ảnh sản phẩm
+                  {{{sortable 'images' _sort}}}
+                </th>
+                <th scope="col">
+                  Giá sản phẩm
+                  {{{sortable 'price' _sort}}}
+                </th>
+                <th scope="col">Tùy chọn</th>
+            </tr>
+        </thead>
+        <tbody>
+            {{#each products}}
+            <tr style="border-bottom: 1px solid #dee2e6;">
+                <td>
+                  <div class="form-check">
+                    <input class="form-check-input" type="checkbox" name="productIds[]" value="{{this._id}}">
+                  </div>
+                </td>
+                <th scope="row">{{stt @index 1}}</th>
+                <td>{{this.name}}</td>
+                <td>
+                  {{#each this.images}}
+                      <img src="../{{this}}" class="img-fluid rounded-start listImgs_img" alt="{{../name}}">
+                  {{/each}}
+                </td>
+                <td>{{this.price}}$</td>
+                <td>
+                    <a href="/products/{{this._id}}/edit" class="btn btn-link">Sửa</a>
+                    <a href="" class="btn btn-link" data-id="{{this._id}}" data-bs-toggle="modal" data-bs-target="#delete-product-modal">Xóa</a>
+                </td>
+            </tr>
+            {{else}}
+              <tr>
+                <td colspan="5" class="text-center">
+                  Bạn chưa có sản phẩm nào.
+                  <a href="/products/create">Thêm sản phẩm</a>
+                </td>
+              </tr>
+            {{/each}}
+        </tbody>
+    </table>
+    
+    <div id="pagination" class="d-flex align-items-center justify-content-center">
+      <nav aria-label="Page navigation example">
+        <ul class="pagination">
+          <li class="page-item">
+            {{{previousPage currentPage totalPage}}}
+          </li>
+          
+          {{{pagination totalPage}}}
+
+          <li class="page-item">
+            {{{nextPage currentPage totalPage}}}
+          </li>
+        </ul>
+      </nav>
+    </div>
+
+</form>
+
+
+
+
+{{!-- modal delete product --}}
+<div id="delete-product-modal" class="modal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Xóa khóa học?</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <p>Bạn có chắc muốn xóa khóa học này không?</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+        <button type="button" id="btn-delete" class="btn btn-danger">Xóa bỏ</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+{{!-- tạo form hidden để thực hiện submit --}}
+<form id="delete-product-form" method="POST"></form>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function(){
+        var deleteProductModal = document.getElementById('delete-product-modal')
+        var btnDelete = document.querySelector('#btn-delete')
+        var formDeleteproduct = document.querySelector('#delete-product-form')
+        var checkboxAll = $('#checkbox-all')
+        var checkboxproductItem = $('input[name="productIds[]"]')
+        var applySubmitBtn =  $('.apply-submit-btn')
+        var productId;
+
+        //click btn xóa trong khóa học
+        if (deleteProductModal) {
+            deleteProductModal.addEventListener('show.bs.modal', function(event) {
+                // Button that triggered the modal
+                btnDelete = event.relatedTarget
+                // Extract info from data-bs-* attributes
+                productId = btnDelete.getAttribute('data-id')
+            })
+        }
+
+        //click btn xóa trong modal
+        btnDelete.addEventListener('click', function (){
+            formDeleteproduct.action = '/products/' + productId + '?_method=DELETE'
+            formDeleteproduct.submit()
+            })
+
+        //click checkboxAll
+        checkboxAll.change(function(){
+          var isCheckedAll = $(this).prop('checked')
+          checkboxproductItem.prop('checked', isCheckedAll)
+          renderapplySubmitBtn()
+        })
+
+        //click checkboxproductItem
+        checkboxproductItem.change(function(){
+          var isCheckedAllItem = checkboxproductItem.length ===  $('input[name="productIds[]"]:checked').length
+          checkboxAll.prop('checked', isCheckedAllItem)
+          renderapplySubmitBtn()
+        })    
+
+
+        //bật / tắt applySubmitBtn
+        function renderapplySubmitBtn(){
+          var checkedCount = $('input[name="productIds[]"]:checked').length
+          if(checkedCount > 0){
+            applySubmitBtn.attr('disabled', false); // or: applySubmitBtn.removeAttr('disabled')
+          }else{
+            applySubmitBtn.attr('disabled', true); // or: applySubmitBtn.addAttr('disabled')
+          }
+        }    
+        
+    })
+
+</script>
+
+
+{{!-- khi bấm submit thì sẽ lấy hết giá trị của attribute NAME và giá trị của attribute VALUE có trong thẻ form( input, select, option, textarea...) --}}

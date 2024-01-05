@@ -1,0 +1,135 @@
+<style>
+  #search-input{
+    position: relative;
+  }
+  .search_results_block{
+    position: absolute;
+    width: 80%;
+    top: -5px;
+    left: 5%;
+    z-index: 1;
+    background-color: rgba(0, 0, 0, 0.8);
+    border-radius: 5px;
+    padding: 10px;
+    display: none;
+  }
+  .result_item{
+    background-color: rgb(255, 255, 255);
+    padding: 3px;
+    margin-bottom: 3px;
+    border-radius: 5px;
+    color: rgb(0, 0, 0);
+    text-decoration: none;
+  }
+  
+  a.result_block{
+    text-decoration: none;
+  }
+</style>
+
+
+  <nav class=" navbar navbar-expand-md navbar-expand-sm bg-dark fixed-menu fixed-top">
+    <a class="navbar-brand ml-4" href="/"><img src="/images/logo.png" style="border:1px solid #e24343; border-radius: 50%; width: 40px; height: 40px; object-fit: cover;"></a>
+    
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNavDropdown" aria-controls="navbarNavDropdown" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    
+    <div class="input-group mr-4 ml-4">
+      <input id="search-input" type="search" class="form-control rounded" placeholder="search..." aria-label="Search" aria-describedby="search-addon" />
+      <button id="search-btn" type="button" class="btn btn-primary ml-2" disabled>Search</button>
+      <div class="search_results_block" style="margin-top: 56px ;" >
+        {{!-- render result --}}
+      </div>
+    </div>
+
+    <div class="collapse navbar-collapse" id="navbarNavDropdown">
+      <ul class="navbar-nav mr-4">
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" id="profile" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+            {{#if account}}
+              {{#if account.images}}
+                <img src="../{{lookup account.images 0}}" style="width: 30px; height: 30px; border-radius: 50%;">
+              {{/if}}
+              {{account.name}}
+            {{else}}
+              Login
+            {{/if}}
+          </a>
+
+          <div class="dropdown-menu">
+            {{#if account}}
+              <a class="dropdown-item" href="/products/create">Thêm sản phẩm</a>
+              <a class="dropdown-item" href="/me/stored/products">Quản lí sản phẩm</a>
+              <hr class="dropdown-divider">
+              <a class="dropdown-item" href="/my-account">Tài khoản của tôi</a>
+              <hr class="dropdown-divider">
+              <a class="dropdown-item" href="/auth/logout">Đăng xuất</a>
+            {{else}}
+              <a class="dropdown-item" href="/auth/login" >Đăng nhập</a>
+            {{/if}}
+          </div>
+        </li>
+      </ul>
+      <div>
+        {{#if account}}
+          <a style="position: relative; " href="/cart/{{account._id}}">
+            <i style="color: aliceblue; font-size: 40px; margin: auto 15px" class="fa-solid fa-cart-shopping"></i>
+            <span style="position: absolute; top: -18px; right: 30px">{{cartItemCount}}</span>
+          </a>
+        {{else}}
+          <a style="position: relative; " href="/error/errorCart">
+            <i style="color: aliceblue; font-size: 40px; margin: auto 15px" class="fa-solid fa-cart-shopping"></i>
+          </a>
+        {{/if}}
+      </div>
+    </div>
+  </nav>
+
+
+ 
+<script>
+  document.addEventListener("DOMContentLoaded", function(){
+    const searchInput = document.querySelector("#search-input")
+    const searchBtn = document.querySelector("#search-btn")
+    const search_results_block = document.querySelector(".search_results_block")
+    
+
+    searchInput.addEventListener("input", function(e) {
+      const searchValue = encodeURIComponent(e.target.value.trim().toLowerCase())
+      if(searchValue && searchValue != ''){
+        search_results_block.style.display = 'block'
+        searchBtn.disabled = false
+        const url = `/search?keysearch=${searchValue}`
+        fetch(url)
+          .then(response => {return response.json()})
+          .then(datas => {
+            if (datas && datas.length > 0) {
+                search_results_block.innerHTML = ''
+              var htmls = datas.map(function(item){
+                return `<a href="/products/${item.slug}" class="result_block">
+                          <div class="card-body result_item">
+                            <p class="card-title">${item.name}</p>
+                            <small class="card-text">${item.description}</small>
+                          </div>
+                        </a>`
+              })
+              search_results_block.innerHTML = htmls.join('')
+            }else{
+              search_results_block.innerHTML = `<smaill style="color: #fff;">Không có kết quả phù hợp</smaill>`
+            }
+            
+          })
+          .catch(err => {console.error(err)})
+      }else{
+        searchBtn.disabled = true
+        search_results_block.style.display = 'none'
+      }
+    })
+
+    searchBtn.addEventListener('click', function() {
+      const searchValue = encodeURIComponent(searchInput.value.trim().toLowerCase())
+      window.location.href = `/search-results?keysearch=${searchValue}&result=2`
+    })
+  })
+</script>

@@ -1,0 +1,56 @@
+
+<a href="/"><< Tiếp tục mua sắm</a>
+    <div class="row">
+        {{#each cartItems}}
+            <div class="card mr-auto mb-4 mt-4" style="max-width: 540px;">
+              <div class="row g-0">
+                <div class="col-md-4">
+                  <a href="/products/{{this.product.slug}}">
+                    <img src="{{lookup this.product.images 0}}" class="img-fluid rounded-start" alt="{{this.products.name}}">
+                  </a>
+                </div>
+                <div class="col-md-8">
+                  <div class="card-body">
+                    <a href="/products/{{this.product.slug}}">
+                      <h5 class="card-title">{{this.product.name}}</h5>
+                    </a>
+                    <p class="card-text">{{this.product.description}}</p>
+                    <small class="card-text"><p class="text-body-secondary">Ngày thêm: {{this.addedAt}}</p></small>
+                    <button type="submit" id="remove_cart" class="btn btn-primary" data-product-id="{{this.product._id}}">Xóa khỏi giỏ hàng</button>
+                    <button type="submit" id="order" class="btn btn-success" data-product-id="{{this.product._id}}">Mua ngay</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+        {{else}}
+
+        <div class="container text-center mt-4 err-bgr">
+          <span>Bạn chưa có gì trong giỏ hàng! </span>
+          <a href="/">Xem sản phẩm tại đây.</a>
+        </div>
+        {{/each}}
+    </div>
+
+    {{!-- tạo form hidden để thực hiện submit --}}
+    <form id="remove-to-cart-form" method="POST"></form>
+
+
+<script>
+  document.addEventListener("DOMContentLoaded", function(e) {
+
+    const remove_cartsBtn = document.querySelectorAll('#remove_cart')
+    if(remove_cartsBtn){
+      remove_cartsBtn.forEach(function(remove_cartBtn){
+        remove_cartBtn.addEventListener('click', function (e) {
+          e.preventDefault()
+          const productId = remove_cartBtn.getAttribute('data-product-id')
+          const remove_to_cart_form = document.querySelector('#remove-to-cart-form')
+          remove_to_cart_form.action = '/cart/' + productId + '?_method=DELETE'
+          remove_to_cart_form.submit()
+        })
+      })
+    }
+
+  })
+  
+</script>
